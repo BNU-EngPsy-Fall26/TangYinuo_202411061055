@@ -1,399 +1,298 @@
-/**
- * app.js —— 界面装配与主流程
- * ---------------------------------------------------------------------------
- * 把所有模块串起来：
- *   ① 用 config.js 里的场景定义渲染「任务简报」页（信号/噪音定义、四种结果、参数设置）
- *   ② 步骤导航（简报 → 任务 → 结果 → 概念实验室）
- *   ③ 启动 Engine 跑实验，把 hooks 接到声呐渲染器与界面提示上
- *   ④ 一局结束 → summarize → results.render，并把本局存入历史用于多局对比
- *   ⑤ 键盘作答（F = 有目标，J = 无目标）、导出 CSV、窗口缩放重绘
- * ---------------------------------------------------------------------------
- */
+/* ============================================================
+ * app.js —— 路由与页面
+ *
+ * 路由（hash）：
+ *   #/            实验列表
+ *   #/run/<id>    进入某个实验（未同意则先出知情同意）
+ *   #/results     结果页
+ *   #/about       项目说明
+ *   #/researcher  研究者备份面板（导出本机缓存）
+ * ============================================================ */
+
 (function (global) {
   'use strict';
 
-  const SDT = global.SDT;
-  const U = SDT.util;
-  const CFG = SDT.config;
-  const S = CFG.SCENARIO;
+  var A = global.ALAB;
+  var el = A.el;
 
-  const STORAGE_KEY = 'sdt-sonar-lab.history.v1';
+  /* ============================================================
+   * 首页
+   * ========================================================== */
 
-  /* =======================================================================
-   * 全局状态
-   * ===================================================================== */
-  const app = {
-    step: 'brief',
-    engine: null,
-    renderer: null,
-    lastStats: null,
-    history: loadHistory()
-  };
+  function renderHome(view) {
+    var expList = A.list();
 
-  /* =======================================================================
-   * 历史记录（多局对比）
-   * ===================================================================== */
-  function loadHistory() {
-    try {
-      const raw = global.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) {
-      // file:// 或隐私模式下 localStorage 可能不可用，退化为内存存储
-      return [];
-    }
+    var html = '<h1>注意实验室</h1><div class="rule"></div>' +
+      '<p class="lede">三个经典注意范式的在线复现，每个都带一个可以检验的改进条件。</p>' +
+      '<p class="dim">选一个实验完成即可，约 5–7 分钟。全程匿名，数据只用于课程分析。' +
+      '建议在安静环境、用电脑或手机单独完成，不要中途切屏。</p>';
+
+    view.innerHTML = html;
+
+    var cards = el('div', { class: 'cards' });
+    expList.forEach(function (exp) {
+      var card = el('div', { class: 'card' }, [
+        el('span', { class: 'card-tag', text: exp.week + ' · 经典范式' }),
+        el('h3', { text: exp.title }),
+        el('p', { class: 'ref', text: exp.ref }),
+        el('ul', {}, [
+          el('li', { html: '<b>设计：</b>' + exp.design }),
+          el('li', { html: '<b>改进：</b>' + exp.improvement })
+        ]),
+        el('div', { class: 'spacer' }),
+        el('div', { class: 'meta-row' }, [
+          el('span', { text: exp.minutes }),
+          el('span', { text: exp.trialsText })
+        ]),
+        el('div', { class: 'btn-row' }, [
+          el('button', {
+            class: 'btn primary',
+            text: '开始实验',
+            onclick: function () { location.hash = '#/run/' + exp.id; }
+          })
+        ])
+      ]);
+      cards.appendChild(card);
+    });
+    view.appendChild(cards);
+
+    view.appendChild(el('div', { class: 'panel', style: 'margin-top:28px' }, [
+      el('h3', { text: '开始前请确认' }),
+      el('ul', {
+        html: '<li>你已年满 18 岁，自愿参加，可随时关闭页面退出（数据不会上传）。</li>' +
+              '<li>请<b>单独</b>完成，不要与他人讨论，不要反复重做同一实验——那会污染数据。</li>' +
+              '<li>手机也可以完成：反应按钮在屏幕下方，键盘 F/J 同样可用。</li>' +
+              '<li>同一浏览器会记住你的匿名编号；换设备会生成新编号，属正常现象。</li>'
+      })
+    ]));
   }
 
-  function saveHistory() {
-    try {
-      // 只存汇总量，不存逐试次明细，避免超出存储配额
-      const slim = app.history.slice(-30).map(function (h) {
-        return {
-          meta: h.meta, counts: h.counts, n: h.n, rates: h.rates,
-          pH: h.pH, pFA: h.pFA, dprime: h.dprime, c: h.c, beta: h.beta,
-          accuracy: h.accuracy, aPrime: h.aPrime, auc: h.auc,
-          majorityBaseline: h.majorityBaseline, accuracyGain: h.accuracyGain,
-          rtMean: h.rtMean, corrected: h.corrected, warnings: [], notes: []
-        };
-      });
-      global.localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
-    } catch (e) { /* 忽略：不影响主流程 */ }
-  }
+  /* ============================================================
+   * 知情同意
+   * ========================================================== */
 
-  /* =======================================================================
-   * 步骤导航
-   * ===================================================================== */
-  function goStep(step) {
-    if (app.step === 'task' && step !== 'task') {
-      // 离开任务页时终止正在进行的实验
-      if (app.engine && !app.engine.isDone()) app.engine.abort();
-    }
-    app.step = step;
+  function renderConsent(view, exp) {
+    view.innerHTML = '';
+    var pid = A.participantId();
 
-    U.$$('.view').forEach(function (v) {
-      v.classList.toggle('is-active', v.id === 'view-' + step);
-    });
-    U.$$('.step').forEach(function (b) {
-      b.classList.toggle('is-active', b.getAttribute('data-step') === step);
-    });
-    global.scrollTo({ top: 0, behavior: 'smooth' });
+    var box = el('div', { class: 'consent-box' }, [
+      el('p', { html: '<b>研究名称：</b>注意过程的经典范式复现与改进（课程作业）' }),
+      el('p', { html: '<b>研究目的：</b>在课堂范围内检验三个经典注意实验的现象是否可复现，并测试本研究的改进条件。' }),
+      el('p', { html: '<b>你要做什么：</b>完成「' + exp.title + '」，' + exp.trialsText + '，' + exp.minutes + '。' +
+        '过程中需要注视屏幕并按 F / J（或点击按钮）作答。' }),
+      el('p', { html: '<b>风险：</b>本任务无已知风险，强度不超过日常看屏幕；如感到疲劳可随时关闭页面退出。' }),
+      el('p', { html: '<b>自愿与退出：</b>参加完全自愿。你可以在任何阶段关闭页面退出，已产生的数据不会上传。' }),
+      el('p', { html: '<b>匿名与保密：</b>不收集姓名、学号、手机号、IP 等信息，只记录匿名编号（本机自动生成，如 P-4K7Q2M）、' +
+        '按键反应、反应时和试次条件。数据仅用于本课程的成绩评定与课堂讨论，不作他用。' }),
+      el('p', { html: '<b>数据去向：</b>实验结束后自动上传到课程指定的收数接口，由任课教师与助教查看；' +
+        '你也可以随时下载自己的原始数据。' }),
+      el('p', { html: '<b>联系：</b>如有疑问，请联系课程助教（联系方式见课程群公告）。' })
+    ]);
 
-    // 切到需要绘图的视图时，等布局稳定后重绘
-    requestAnimationFrame(function () {
-      if (step === 'concept') SDT.concept.refresh();
-      if (step === 'result' && app.lastStats) {
-        SDT.results.render(app.lastStats, app.history);
-      }
-      if (step === 'task' && app.renderer) app.renderer.resize();
-    });
-  }
-
-  /* =======================================================================
-   * 一、渲染「任务简报」页
-   * ===================================================================== */
-  function renderBrief() {
-    // ---- 开场导语 ----
-    U.$('#heroLead').textContent = S.briefing;
-
-    // ---- 信号 / 噪音定义 ----
-    const defHtml = function (item, kind) {
-      return '' +
-        '<div class="def def--' + kind + '">' +
-        '<div class="def__badge">' + (kind === 'signal' ? 'S' : 'N') + '</div>' +
-        '<div class="def__body">' +
-        '<h4>' + U.escapeHtml(item.label) + '<em>' + U.escapeHtml(item.short) + '</em></h4>' +
-        '<p>' + U.bold(U.escapeHtml(item.desc)) + '</p>' +
-        '<div class="def__visual"><span>视觉特征</span>' + U.escapeHtml(item.visual) + '</div>' +
-        '</div></div>';
-    };
-    U.$('#signalDef').innerHTML = defHtml(S.signal, 'signal');
-    U.$('#noiseDef').innerHTML = defHtml(S.noise, 'noise');
-
-    // ---- 四种结果 ----
-    U.$('#outcomeGrid').innerHTML = ['hit', 'miss', 'fa', 'cr'].map(function (key) {
-      const o = S.outcomes[key];
-      return '' +
-        '<div class="oc oc--' + key + '">' +
-        '<div class="oc__top"><span class="oc__code">' + o.code + '</span>' +
-        '<span class="oc__name">' + o.name + '</span>' +
-        '<span class="oc__en">' + o.en + '</span></div>' +
-        '<div class="oc__states">' + o.states + '</div>' +
-        '<p class="oc__cons">' + U.escapeHtml(o.consequence) + '</p>' +
-        '</div>';
-    }).join('');
-
-    // ---- 操作说明 ----
-    U.$('#instructionList').innerHTML = S.instructions.map(function (t) {
-      return '<li>' + U.bold(U.escapeHtml(t)) + '</li>';
-    }).join('');
-
-    // ---- 参数预设 ----
-    U.$('#presetRow').innerHTML = CFG.PRESETS.map(function (p, i) {
-      return '<button type="button" class="preset" data-preset="' + p.id + '">' +
-        '<strong>' + U.escapeHtml(p.name) + '</strong>' +
-        '<span>' + U.escapeHtml(p.desc) + '</span>' +
-        '</button>';
-    }).join('');
-
-    U.$$('.preset').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const p = CFG.PRESETS.filter(function (x) { return x.id === btn.getAttribute('data-preset'); })[0];
-        if (!p) return;
-        applyParams(p.params);
-        U.$$('.preset').forEach(function (b) { b.classList.remove('is-active'); });
-        btn.classList.add('is-active');
-      });
-    });
-
-    // ---- 滑块 ----
-    bindSlider('#briefPrior', '#briefPriorVal', function (v) { return U.pct(v, 0); });
-    bindSlider('#briefDp', '#briefDpVal', function (v) { return v.toFixed(1); });
-    bindSlider('#briefTrials', '#briefTrialsVal', function (v) { return v + ' 试次'; });
-    bindSlider('#briefObserve', '#briefObserveVal', function (v) { return (v / 1000).toFixed(1) + ' s'; });
-
-    applyParams(CFG.DEFAULTS);
-    U.$$('.preset')[0].classList.add('is-active');
-
-    // ---- 开始按钮 ----
-    U.$('#btnStart').addEventListener('click', startExperiment);
-
-    // 允许在简报页回车直接开始
-    document.addEventListener('keydown', function (e) {
-      if (app.step === 'brief' && e.key === 'Enter' && e.target.tagName !== 'INPUT') {
-        e.preventDefault();
-        startExperiment();
+    var check = el('input', { type: 'checkbox', id: 'agree' });
+    var startBtn = el('button', {
+      class: 'btn primary',
+      text: '我已阅读并同意，开始实验',
+      disabled: 'disabled',
+      onclick: function () {
+        if (!check.checked) return;
+        A.giveConsent();
+        A.beginRun(exp.id, view);
       }
     });
-  }
 
-  function bindSlider(sliderSel, labelSel, fmt) {
-    const slider = U.$(sliderSel);
-    const label = U.$(labelSel);
-    if (!slider) return;
-    const update = function () { label.textContent = fmt(parseFloat(slider.value)); };
-    slider.addEventListener('input', update);
-    update();
-  }
-
-  function applyParams(params) {
-    U.$('#briefPrior').value = params.priorP;
-    U.$('#briefDp').value = params.dprime;
-    U.$('#briefTrials').value = params.trials;
-    U.$('#briefObserve').value = params.observeMs;
-    ['#briefPrior', '#briefDp', '#briefTrials', '#briefObserve'].forEach(function (sel, i) {
-      U.$(sel).dispatchEvent(new Event('input'));
+    check.addEventListener('change', function () {
+      if (check.checked) startBtn.removeAttribute('disabled');
+      else startBtn.setAttribute('disabled', 'disabled');
     });
-    U.$('#briefFeedback').checked = !!params.feedback;
+
+    view.appendChild(el('div', { class: 'panel' }, [
+      el('h1', { text: '知情同意书' }),
+      el('p', { class: 'dim', text: '你的匿名编号：' + pid + '（请勿填写真实姓名或学号）' }),
+      box,
+      el('label', { class: 'checkline', for: 'agree' }, [
+        check,
+        el('span', { text: '我已阅读以上说明，理解研究目的与程序，自愿参加本次实验。' })
+      ]),
+      el('div', { class: 'btn-row' }, [startBtn])
+    ]));
   }
 
-  function readParams() {
-    return {
-      priorP: parseFloat(U.$('#briefPrior').value),
-      dprime: parseFloat(U.$('#briefDp').value),
-      trials: parseInt(U.$('#briefTrials').value, 10),
-      observeMs: parseInt(U.$('#briefObserve').value, 10),
-      feedback: U.$('#briefFeedback').checked,
-      seed: null
-    };
+  /* ============================================================
+   * 说明页
+   * ========================================================== */
+
+  function renderAbout(view) {
+    var rows = A.list().map(function (exp) {
+      return [exp.week, exp.title, exp.ref.split('.')[0], exp.improvement];
+    });
+
+    view.innerHTML = '<h1>项目说明</h1><div class="rule"></div>' +
+      '<div class="panel">' +
+      '<h3>这是什么</h3>' +
+      '<p>「注意实验室」是工程心理学课程作业二的提交物：把 W5–W8 的经典注意范式做成可以在浏览器里直接跑的实验，' +
+      '每个实验都加了一个自己的改进条件，并且至少有一个改进作为<b>新条件真正收了数据</b>来检验。</p>' +
+
+      '<h3>三个实验</h3>' +
+      '<ul>' +
+      '<li><b>闪烁变化盲</b>（W5）：复现 Rensink 等（1997）的闪烁范式；改进是把"注意集"做成操纵——只监测蓝色方块，' +
+      '变化随机落在目标色或非目标色物体上。</li>' +
+      '<li><b>低流行率视觉搜索</b>（W6）：复现 Wolfe 等（2005）的低流行率效应；改进是低流行率条件下加入每试次即时反馈，' +
+      '检验漏报来自"标准漂移"还是"看不见"。</li>' +
+      '<li><b>比例判断</b>（W7）：复现 Cleveland &amp; McGill（1984）的图形知觉差异；改进是给图形加 .25/.50/.75 刻度线，' +
+      '检验锚点能否降低判断误差。</li>' +
+      '</ul>' +
+
+      '<h3>数据字段</h3>' +
+      '<p class="small">上传到收数接口的每条记录包含：<code>project</code>（6 位项目码）、<code>experiment</code>、' +
+      '<code>participant</code>（匿名编号）、<code>condition</code>、<code>trials</code>（试次数组）。' +
+      '每个试次记录条件标签、反应时（ms）、正误，以及该实验特有的字段（如搜索实验的目标有无、比例判断的真实比例与估计值）。' +
+      '所有时间戳均来自 <code>performance.now()</code> 单调时钟。</p>' +
+
+      '<h3>技术栈</h3>' +
+      '<p class="small">纯前端：HTML + CSS + 原生 JavaScript，无框架、无构建步骤。' +
+      '数据画在 <code>&lt;canvas&gt;</code> 上以保证毫秒级呈现控制；统计在结果页现场计算（配对 t 检验、Cohen\'s dz、95% CI）。' +
+      '双击 <code>index.html</code> 即可离线运行。</p>' +
+
+      '<h3>隐私</h3>' +
+      '<p class="small">不收集任何可识别个人信息。匿名编号在浏览器本地生成并保存，换设备会生成新编号。' +
+      '页面不接入任何第三方统计或广告脚本。</p>' +
+
+      '<h3>AI 使用说明</h3>' +
+      '<p class="small">本项目的程序设计、刺激绘制与统计代码在 AI 助手（WorkBuddy）辅助下完成；' +
+      '实验选题、改进思路、假设预测、结果解释与讨论由作者本人确定并对内容负责。' +
+      '详见仓库 README 的「AI 使用说明」一节。</p>' +
+      '</div>';
+
+    view.appendChild(el('p', {
+      class: 'dim small',
+      style: 'margin-top:16px',
+      html: '实验清单：' + A.list().map(function (e) { return e.week + ' ' + e.title; }).join(' · ')
+    }));
   }
 
-  /* =======================================================================
-   * 二、跑实验
-   * ===================================================================== */
-  function startExperiment() {
-    const params = readParams();
+  /* ============================================================
+   * 研究者面板（本机缓存兜底）
+   * ========================================================== */
 
-    goStep('task');
+  function renderResearcher(view) {
+    var log = A.localSubmissions();
+    var cfg = A.CFG;
 
-    // 等 DOM 可见后再初始化渲染器，否则量不到画布尺寸
-    requestAnimationFrame(function () {
-      const canvas = U.$('#sonarCanvas');
-      app.renderer = SDT.sonar.createRenderer(canvas);
-      app.renderer.resize();
-      app.renderer.drawIdle('准备就绪…');
+    var rows = log.map(function (s) {
+      return [
+        s.participant,
+        s.experiment,
+        s.trials ? s.trials.length : 0,
+        s.submittedAt ? s.submittedAt.replace('T', ' ').slice(0, 19) : '—'
+      ];
+    });
 
-      // HUD 参数回显
-      U.$('#hudPrior').textContent = U.pct(params.priorP, 0);
-      U.$('#hudDp').textContent = params.dprime.toFixed(1);
-      U.$('#hudObserve').textContent = (params.observeMs / 1000).toFixed(1) + 's';
+    view.innerHTML = '<h1>研究者备份</h1><div class="rule"></div>' +
+      '<p class="lede">被试浏览器在每次实验结束时会留一份本机备份（即使上传失败也不丢）。' +
+      '这里只显示<b>当前这台设备</b>完成的记录，用于被试把 CSV 发给你时核对。</p>' +
+      '<div class="panel">' +
+      '<h3>收数配置状态</h3>' +
+      '<p class="small">项目码：<code>' + (cfg.projectCode || '（未填写）') + '</code>　' +
+      '自动上传：<b>' + (cfg.uploadEnabled ? '已开启' : '未开启') + '</b>　' +
+      '接口：<code>' + cfg.apiEndpoint + '</code></p>' +
+      (cfg.projectCode && cfg.uploadEnabled
+        ? '<p class="small" style="color:#1f7a4d">配置正常，被试完成后会自动上传。</p>'
+        : '<p class="small" style="color:#a83232">注意：项目码为空或自动上传未开启，数据只会留在被试本机，需要让他们下载 CSV 发给你。</p>') +
+      '</div>' +
+      (log.length
+        ? '<h3 style="margin-top:26px">本机记录（' + log.length + ' 条）</h3>' +
+          '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+          '<th>匿名编号</th><th>实验</th><th>试次数</th><th>提交时间</th>' +
+          '</tr></thead><tbody>' +
+          rows.map(function (r) {
+            return '<tr><td>' + r[0] + '</td><td class="num">' + r[1] +
+                   '</td><td class="num">' + r[2] + '</td><td class="num">' + r[3] + '</td></tr>';
+          }).join('') +
+          '</tbody></table></div>'
+        : '<div class="empty">这台设备上还没有完成过实验。</div>');
 
-      setButtonsEnabled(false);
-      setBanner('准备中…', 'muted');
-
-      app.engine = new SDT.Engine(params, {
-        onTrialStart: function (info) {
-          U.$('#hudTrial').textContent = (info.index + 1) + ' / ' + info.total;
-          U.$('#timerFill').style.width = '0%';
-          setButtonsEnabled(false);
-          setBanner('第 ' + (info.index + 1) + ' 试次 · 准备', 'ready');
-          app.renderer.drawIdle('第 ' + (info.index + 1) + ' / ' + info.total + ' 试次');
-        },
-        onReveal: function (cols, progress, scanline) {
-          if (!app.engine.current) return;
-          app.renderer.draw(app.engine.current.stim, cols, { scanline: !!scanline });
-          U.$('#timerFill').style.width = (progress * 100).toFixed(1) + '%';
-        },
-        onJudgeOpen: function () {
-          setButtonsEnabled(true);
-          setBanner('扫描结束 · 请判断', 'judge');
-        },
-        onAnswer: function (info) {
-          setButtonsEnabled(false);
-        },
-        onFeedback: function (info) {
-          setBanner(info.correct ? '✓ 判断正确' : '✗ 判断错误', info.correct ? 'good' : 'bad');
-        },
-        onFinish: function (trials, meta) {
-          finishExperiment(trials, meta);
+    view.appendChild(el('div', { class: 'btn-row' }, [
+      el('button', {
+        class: 'btn primary',
+        text: '导出全部本机记录（CSV）',
+        onclick: function () {
+          var rowsOut = [];
+          log.forEach(function (s) {
+            s.trials.forEach(function (t, i) {
+              rowsOut.push(Object.assign({
+                participant: s.participant,
+                experiment: s.experiment,
+                condition: s.condition,
+                trial_index: i + 1,
+                submitted_at: s.submittedAt
+              }, t));
+            });
+          });
+          if (!rowsOut.length) { alert('没有可导出的数据。'); return; }
+          A.download('alab_local_backup.csv', A.toCSV(rowsOut));
         }
-      });
-
-      app.engine.start();
-    });
-  }
-
-  function finishExperiment(trials, meta) {
-    const stats = SDT.sdt.summarize(trials, meta);
-    app.lastStats = stats;
-    app.history.push(stats);
-    saveHistory();
-
-    // 结果页顶部概要
-    U.$('#resultMeta').innerHTML =
-      '<span>先验 P(S) <b>' + U.pct(meta.priorP, 0) + '</b></span>' +
-      '<span>设计 d′ <b>' + meta.dprime.toFixed(1) + '</b></span>' +
-      '<span>试次 <b>' + stats.n + '</b></span>' +
-      '<span>观察时长 <b>' + (meta.observeMs / 1000).toFixed(1) + 's</b></span>' +
-      '<span>随机种子 <b>' + meta.seed + '</b></span>';
-
-    SDT.results.render(stats, app.history);
-    if (app.updateStepAvailability) app.updateStepAvailability();
-    goStep('result');
-  }
-
-  /* ---- 任务页的小工具 ---- */
-  function setButtonsEnabled(on) {
-    [U.$('#btnYes'), U.$('#btnNo')].forEach(function (b) {
-      if (b) b.disabled = !on;
-    });
-  }
-
-  function setBanner(text, tone) {
-    const b = U.$('#taskBanner');
-    if (!b) return;
-    b.textContent = text;
-    b.className = 'task-banner task-banner--' + (tone || 'muted');
-  }
-
-  function respond(answer) {
-    if (!app.engine) return;
-    if (!app.engine.answer(answer)) {
-      // 扫描未结束时的按键：给一个温和提示
-      setBanner('扫描进行中，请等扫描结束再作答', 'warn');
-    }
-  }
-
-  /* =======================================================================
-   * 三、事件绑定
-   * ===================================================================== */
-  function bindGlobal() {
-    // 步骤按钮
-    const resultStepBtn = U.$$('.step').filter(function (b) {
-      return b.getAttribute('data-step') === 'result';
-    })[0];
-
-    /** 没有本局结果时，把"结果分析"步骤置为不可点 */
-    function updateStepAvailability() {
-      if (!resultStepBtn) return;
-      const has = !!app.lastStats;
-      resultStepBtn.disabled = !has;
-      resultStepBtn.title = has ? '查看本局结果' : '先完成一局实验才能查看结果';
-    }
-    updateStepAvailability();
-    app.updateStepAvailability = updateStepAvailability;
-
-    U.$$('.step').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const step = btn.getAttribute('data-step');
-
-        if (step === 'task') {
-          // 已有结果或没有会话时，"检测任务"表示"再跑一局"；正在跑则只切换视图
-          if (!app.engine || app.engine.isDone()) {
-            startExperiment();
-          } else {
-            goStep('task');
-          }
-          return;
+      }),
+      el('button', {
+        class: 'btn',
+        text: '清空本机记录',
+        onclick: function () {
+          if (!global.confirm('清空这台设备上的备份记录？此操作不可撤销。')) return;
+          A.store.del('alab.log.v1');
+          route();
         }
-        goStep(step);
-      });
-    });
-
-    // 作答按钮
-    if (U.$('#btnYes')) U.$('#btnYes').addEventListener('click', function () { respond('signal'); });
-    if (U.$('#btnNo')) U.$('#btnNo').addEventListener('click', function () { respond('noise'); });
-
-    // 键盘作答
-    document.addEventListener('keydown', function (e) {
-      if (app.step !== 'task') return;
-      if (e.repeat) return;
-      const k = e.key.toLowerCase();
-      if (k === 'f' || k === 'arrowleft' || k === '1') { e.preventDefault(); respond('signal'); }
-      else if (k === 'j' || k === 'arrowright' || k === '2') { e.preventDefault(); respond('noise'); }
-    });
-
-    // 结果页按钮
-    if (U.$('#btnRedo')) {
-      U.$('#btnRedo').addEventListener('click', startExperiment);
-    }
-    if (U.$('#btnRetune')) {
-      U.$('#btnRetune').addEventListener('click', function () { goStep('brief'); });
-    }
-    if (U.$('#btnExport')) {
-      U.$('#btnExport').addEventListener('click', function () {
-        if (app.lastStats) SDT.results.exportCsv(app.lastStats.trialList, app.lastStats);
-      });
-    }
-    if (U.$('#btnClearHistory')) {
-      U.$('#btnClearHistory').addEventListener('click', function () {
-        app.history = [];
-        saveHistory();
-        if (U.$('#historyTableBody')) SDT.results.renderHistory(U.$('#historyTableBody'), []);
-        if (app.lastStats) SDT.results.render(app.lastStats, []);
-      });
-    }
-
-    // 概念实验室
-    SDT.concept.init();
-
-    // 窗口尺寸变化时重绘所有画布
-    let resizeTimer = null;
-    global.addEventListener('resize', function () {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(function () {
-        if (app.renderer && app.step === 'task') app.renderer.resize();
-        if (app.lastStats && app.step === 'result') SDT.results.render(app.lastStats, app.history);
-        if (app.step === 'concept') SDT.concept.refresh();
-      }, 160);
-    });
+      })
+    ]));
   }
 
-  /* =======================================================================
-   * 启动
-   * ===================================================================== */
-  function boot() {
-    renderBrief();
-    bindGlobal();
-    if (U.$('#historyTableBody')) SDT.results.renderHistory(U.$('#historyTableBody'), app.history);
-    goStep('brief');
+  /* ============================================================
+   * 路由
+   * ========================================================== */
+
+  function setNav(name) {
+    var links = document.querySelectorAll('.nav a');
+    for (var i = 0; i < links.length; i++) {
+      links[i].classList.toggle('active', links[i].getAttribute('data-nav') === name);
+    }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
+  function route() {
+    var view = A.$('#view');
+    var hash = location.hash || '#/';
+    var m;
+
+    if ((m = hash.match(/^#\/run\/([a-z0-9_-]+)$/))) {
+      var exp = A.get(m[1]);
+      if (!exp) { location.hash = '#/'; return; }
+      setNav('home');
+      if (!A.hasConsent()) renderConsent(view, exp);
+      else A.beginRun(exp.id, view);
+      return;
+    }
+
+    if (hash === '#/results') {
+      setNav('results');
+      global.ALAB_RESULTS.render(view);
+      return;
+    }
+
+    if (hash === '#/about') {
+      setNav('about');
+      renderAbout(view);
+      return;
+    }
+
+    if (hash === '#/researcher') {
+      setNav('');
+      renderResearcher(view);
+      return;
+    }
+
+    setNav('home');
+    renderHome(view);
   }
 
-  SDT.app = app;
+  global.addEventListener('hashchange', route);
+  global.addEventListener('DOMContentLoaded', route);
+  if (document.readyState !== 'loading') route();
 })(window);

@@ -1,0 +1,147 @@
+/* ===========================================================================
+   base.css —— 设计变量、重置、排版基础
+   ---------------------------------------------------------------------------
+   主题：深海声呐控制台。深蓝底 + 青色信号色 + 琥珀噪声色，
+   数字一律用等宽字体，保证读数对齐、有"仪器感"。
+   =========================================================================== */
+
+/* ---------- 设计变量 ---------- */
+:root {
+  /* 背景层次 */
+  --bg:            #04121e;
+  --bg-deep:       #020b13;
+  --bg-panel:      #082238;
+  --bg-panel-2:    #0a2a43;
+  --bg-sunken:     #051829;
+
+  /* 线条 */
+  --line:          rgba(96, 156, 186, 0.22);
+  --line-soft:     rgba(96, 156, 186, 0.13);
+  --line-strong:   rgba(120, 190, 220, 0.42);
+
+  /* 文字 */
+  --text:          #e8f4fa;
+  --text-2:        #a9c6d6;
+  --text-3:        #6f92a8;
+
+  /* 语义色 */
+  --cyan:          #3fdbd0;   /* 信号 / 主色 */
+  --cyan-soft:     rgba(63, 219, 208, 0.14);
+  --amber:         #f3b544;   /* 噪声 / 警示 */
+  --amber-soft:    rgba(243, 181, 68, 0.14);
+  --green:         #57d99a;   /* 正确 */
+  --red:           #ff7a7a;   /* 错误 */
+  --orange:        #ff8a5c;   /* 判定标准 */
+  --violet:        #a78bfa;   /* 最优标准 */
+
+  /* 字体 */
+  --ff-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei",
+             "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC",
+             system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ff-mono: "Cascadia Mono", "JetBrains Mono", Consolas, "SFMono-Regular",
+             "Courier New", ui-monospace, monospace;
+
+  /* 尺寸 */
+  --radius:    14px;
+  --radius-sm: 9px;
+  --gap:       20px;
+  --maxw:      1320px;
+
+  /* 阴影 */
+  --shadow:    0 18px 40px -22px rgba(0, 0, 0, 0.85);
+  --shadow-sm: 0 8px 20px -14px rgba(0, 0, 0, 0.9);
+}
+
+/* ---------- 重置 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 620px at 12% -12%, rgba(24, 96, 128, 0.30), transparent 62%),
+    radial-gradient(900px 520px at 96% 4%, rgba(18, 74, 104, 0.26), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 700; line-height: 1.25; }
+p  { margin: 0; }
+ul, ol { margin: 0; padding: 0; }
+li { list-style: none; }
+
+a { color: var(--cyan); text-decoration: none; }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+canvas { display: block; }
+
+code, kbd, .num, output, dl dd {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(63, 219, 208, 0.10);
+  border: 1px solid rgba(63, 219, 208, 0.22);
+  font-size: 0.88em;
+  color: #bff3ee;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 26px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #14384f, #0d2a3d);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+}
+
+strong, b { font-weight: 700; color: #ffffff; }
+
+em { font-style: normal; }
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); }
+::-webkit-scrollbar-thumb {
+  background: rgba(96, 156, 186, 0.35);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(120, 190, 220, 0.55); background-clip: content-box; }
+
+/* ---------- 选中文本 ---------- */
+::selection { background: rgba(63, 219, 208, 0.32); }
+
+/* ---------- 焦点可见（键盘可达性） ---------- */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- 通用小工具类 ---------- */
+.dim   { color: var(--text-3); font-size: 13px; }
+.strong { font-weight: 700; color: #fff; }
+.num   { text-align: right; }
+.empty { color: var(--text-3); text-align: center; padding: 22px 0 !important; }

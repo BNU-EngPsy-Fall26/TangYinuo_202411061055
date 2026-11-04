@@ -1,381 +1,49 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-page-node-id="7BlGP3czFc0zTaChG8Geoq">
-<head data-page-node-id="wyABZl23U43G0WEA0RpFrp">
-<meta charset="utf-8" data-page-node-id="9tWLYR9eOHcnWnOsIxpgYl">
-<meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="ko4rNlrqqVmqE0k4zs28iP">
-<title>深海声呐 · 信号检测论实验室</title>
-<meta name="description" content="信号检测论（SDT）交互式实验网站：在深海声呐场景中完成目标检测任务，自动计算混淆矩阵、d′、c、β、A′、ROC 等指标，并提供可交互的概念实验室。" data-page-node-id="bJcnFSI2OYk65TBo6gGGTu">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' data-page-node-id="MXE3FrBdM17u8Ltqky6Mfi"><rect width='32' height='32' rx='7' fill='%23061a2b' data-page-node-id="VFjueI061GlliiOvg3DtAs"/><circle cx='16' cy='16' r='3' fill='%233fdbd0' data-page-node-id="fHzxyOEwPS1XQd92Go2eyU"/><circle cx='16' cy='16' r='8' fill='none' stroke='%233fdbd0' stroke-opacity='.55' stroke-width='1.6' data-page-node-id="Gk4f6tbzfD8nGVSi1wwIhV"/><circle cx='16' cy='16' r='12.5' fill='none' stroke='%233fdbd0' stroke-opacity='.3' stroke-width='1.4' data-page-node-id="dNntcZrvxB0mwvcRiQEsen"/></svg>">
-<link rel="stylesheet" href="css/base.css" data-page-node-id="20A9qHvudf6NGaCtLh5nTD">
-<link rel="stylesheet" href="css/layout.css" data-page-node-id="5247QUHQQzCSi4FcL2VfjC">
-<link rel="stylesheet" href="css/components.css" data-page-node-id="BhVyPoBjnROYNOfTWkRZdr">
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>注意实验室 · Attention Lab</title>
+  <meta name="description" content="实验心理学课程作业二：三个经典注意实验的复现与改进">
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-page-node-id="KMqChKcDBBmf2ZVCAtJHI1">
-<div class="app" data-page-node-id="LkLLp1mMcD1yYskjSVKqmv">
-
-  <!-- ==================== 顶栏 ==================== -->
-  <header class="topbar" data-page-node-id="akEOlAfJltoRnHvlLGiuGM">
-    <div class="brand" data-page-node-id="9McdlECTdHpgb4ddFXzQdY">
-      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true" data-page-node-id="N9kA8Bva1Fd8Go0u9RXlaa">
-        <circle cx="16" cy="16" r="3" fill="currentColor" data-page-node-id="Ai5U2BiWhGFOWILEtR5WDG"/>
-        <circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="1.6" data-page-node-id="KB8UTiGxVOA1N0pd7VKI6u"/>
-        <circle cx="16" cy="16" r="12.5" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="1.4" data-page-node-id="CLDfYKQme6FrIjuFEDPbCb"/>
-      </svg>
-      <div class="brand__text" data-page-node-id="MB4AXKsSFIrPK5TK0GABhn">
-        <strong data-page-node-id="qxWQzHKXdoRilbg0R7Lvjv">深海声呐</strong>
-        <em data-page-node-id="euWVPPZPiSU7z0U5lnoyQ6">信号检测论实验室 · Signal Detection Theory Lab</em>
-      </div>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#/">
+        注意实验室
+        <span class="brand-sub">Attention Lab</span>
+      </a>
+      <nav class="nav">
+        <a href="#/" data-nav="home">实验</a>
+        <a href="#/results" data-nav="results">结果</a>
+        <a href="#/about" data-nav="about">说明</a>
+      </nav>
     </div>
-    <nav class="steps" aria-label="实验步骤" data-page-node-id="X3ulW4NpvbdZObWDbcFFCN">
-      <button type="button" class="step is-active" data-step="brief" data-page-node-id="la6y9DVtshYQsTGi5sPqgA"><i data-page-node-id="xK4MlSJe4XYgWPmhwBHWIY">1</i><span data-page-node-id="NKGFMX1fCAO6oPAsygHMXI">任务简报</span></button>
-      <button type="button" class="step" data-step="task" data-page-node-id="2041xVu7pPSWplzJXY2FOJ"><i data-page-node-id="xwkf884Dhe14pU7mX9raEM">2</i><span data-page-node-id="pCgvW5BjVrBEZErt6HfWSM">检测任务</span></button>
-      <button type="button" class="step" data-step="result" data-page-node-id="PQcHBByNVxGDVcxCSAduGY"><i data-page-node-id="jhv9wD1ARdsYKZxF9oRCsx">3</i><span data-page-node-id="pjqszpB730hvT2ItxRJPzF">结果分析</span></button>
-      <button type="button" class="step" data-step="concept" data-page-node-id="GkDfhhG8w5beSZKCt3lyY5"><i data-page-node-id="1j1TdkW4HC8uWmtS5qddqH">4</i><span data-page-node-id="rzoupHdYaGDXM9Gcl3jlB9">概念实验室</span></button>
-    </nav>
   </header>
 
-  <main class="main" data-page-node-id="QatC3mEPXrXlIKf8vyCxgE">
+  <main id="view" class="wrap"></main>
 
-    <!-- ==================== ① 任务简报 ==================== -->
-    <section class="view is-active" id="view-brief" data-page-node-id="hoDFfxwfCQE98TpZCjoFSO">
-      <div class="hero" data-page-node-id="p2mnXRYIQP3mFeQxQ5j41k">
-        <p class="hero__kicker" data-page-node-id="9jtTaQ389BshIBya3Hzhn8">远洋调查船 · 声呐操作岗位 · 第 3 航次</p>
-        <h1 class="hero__title" data-page-node-id="j2J6HETAFLfHwzNcE45X8t">在噪声里，判断"到底有没有"</h1>
-        <p class="hero__lead" id="heroLead" data-page-node-id="n93bffi6VSSy9IlBC7XZ0O"></p>
-      </div>
-
-      <div class="grid grid--2" data-page-node-id="mh4OYjknqUsEZmnd5PBxS3">
-        <div class="card" data-page-node-id="YHXNMhuOV8GDgReVHERzRC">
-          <h3 class="card__title" data-page-node-id="v47sYOAUiN5K6exq9CSTU6"><span class="dot dot--s" data-page-node-id="x23sEWSLybrQR3XGw7Alld"></span>信号与噪音的操作性定义</h3>
-          <div id="signalDef" data-page-node-id="uGwqHdYwt0CWUKAQ18opu3"></div>
-          <div id="noiseDef" data-page-node-id="QquxC7E4qbPGOKV4JtIwdt"></div>
-          <p class="hint" data-page-node-id="ncrM344EfCOXHOnh6KALZf">
-            信号检测论的第一步，永远是把"信号"和"噪音"说清楚：它们不是两种东西，
-            而是同一个观察量在两种不同来源下的取值分布。你看到的每一帧瀑布图都不可能告诉你答案，
-            只能给出"证据强度"。
-          </p>
-        </div>
-
-        <div class="card" data-page-node-id="D4xVIPqUletM8Kg421m4Ny">
-          <h3 class="card__title" data-page-node-id="7TEWwcKC0i9ehIV2fQpZ1L"><span class="dot dot--n" data-page-node-id="A8sFWHB9K1mGK9t9we21ve"></span>四种结果，四种后果</h3>
-          <div id="outcomeGrid" class="outcome-grid" data-page-node-id="KLkPV7eeDn1N8gnUzgTzBS"></div>
-          <p class="hint" data-page-node-id="lT7LHTldOm7NqUDjdMDLgv">
-            注意：这里的"对"和"错"并不对称。漏报（M）与误报（FA）都是错误，
-            但在本场景里代价完全不同 —— 这正是判定标准 c 需要权衡的东西。
-          </p>
-        </div>
-      </div>
-
-      <div class="grid grid--params" data-page-node-id="V1g8ENcWrAQSFfIzaHyQUh">
-        <div class="card card--params" data-page-node-id="7j3a37SPQuz51Ymnu9CrWt">
-          <h3 class="card__title" data-page-node-id="ONESAwLX2KONCkls1KthjN">实验参数设置</h3>
-
-          <div class="presets" id="presetRow" data-page-node-id="Y2OyWLC7dx4wvJlO0oiaVa"></div>
-
-          <div class="field" data-page-node-id="ZrwrWFtChzjP1fjiXWPny4">
-            <label for="briefPrior" data-page-node-id="oJLsPINSTv8a11nrsgmTQ1">先验概率 P(S) —— 目标出现的可能性</label>
-            <div class="field__row" data-page-node-id="K6r3UCJDDXD8pLqoBM2DlY">
-              <input type="range" id="briefPrior" min="0.1" max="0.9" step="0.05" value="0.5" data-page-node-id="7LpKbXwYMOWNruB0EnFEYh">
-              <output id="briefPriorVal" data-page-node-id="bOOLbP4Ie4tO2jeBt1c7Da">50%</output>
-            </div>
-            <p class="field__hint" data-page-node-id="rMpsuqQC2QFiRwZq8yXDAi">试次中"有目标"的比例。它不改变你的辨别力，却会显著改变<b data-page-node-id="Hft3xPHnHNP45wN5BqUQnF">划算的判定标准</b>。</p>
-          </div>
-
-          <div class="field" data-page-node-id="DsPvkE0BaFDlz0DUnNoVCu">
-            <label for="briefDp" data-page-node-id="eEBVJxvZLmBw9TKwmOLjP2">难度 d′ —— 信号强度</label>
-            <div class="field__row" data-page-node-id="zMSPVyaAP91x0qSG09062M">
-              <input type="range" id="briefDp" min="0.2" max="4" step="0.1" value="1.5" data-page-node-id="yppPCjrNb9YnVaGyjKa4AC">
-              <output id="briefDpVal" data-page-node-id="dtGThOogVGJC5iX4wWjxzf">1.5</output>
-            </div>
-            <p class="field__hint" data-page-node-id="ExdcHiWSZ7kmNeCJWMewWL">决定线谱相对噪声的强度。d′ 越小，两条分布重叠越多，越难分辨。</p>
-          </div>
-
-          <div class="field" data-page-node-id="qaXEhrqDSAzDROeRUJz2yD">
-            <label for="briefTrials" data-page-node-id="Tt7C7iXgzG2CH1ZH1KA8O5">每局试次数</label>
-            <div class="field__row" data-page-node-id="sUiwktQyqx66S1zWOlZvyN">
-              <input type="range" id="briefTrials" min="20" max="80" step="10" value="40" data-page-node-id="Hs3PtaXycUfkBscQFfmym6">
-              <output id="briefTrialsVal" data-page-node-id="EwEiXvVA79ASknUH2jo2v2">40 试次</output>
-            </div>
-            <p class="field__hint" data-page-node-id="sschGMr9vofK6rsmvBGJMw">试次越多，统计越稳。作业要求每局不少于 20 试次。</p>
-          </div>
-
-          <div class="field" data-page-node-id="7pjSyeOJBLcYHvzM27i9GS">
-            <label for="briefObserve" data-page-node-id="KGB8NLLn9JCZN6LcseEbot">单次观察时长（刺激限时）</label>
-            <div class="field__row" data-page-node-id="udlPPEXn9UTlUXeZQpMnhm">
-              <input type="range" id="briefObserve" min="1000" max="6000" step="500" value="2500" data-page-node-id="plM8fCIIcrfiQJgfB5nB3I">
-              <output id="briefObserveVal" data-page-node-id="XJEn34MxC0OdMm0NVcEYGC">2.5 s</output>
-            </div>
-            <p class="field__hint" data-page-node-id="WIlUFTDo97PBdhEvHvk8Vx">瀑布图扫描的时长。扫描结束画面即冻结，此时才开放作答。</p>
-          </div>
-
-          <label class="switch" data-page-node-id="wcKtSG6NmRjxhxsRkfpHKa">
-            <input type="checkbox" id="briefFeedback" data-page-node-id="Ug959cTEFhEq67kaVaVYTf">
-            <span class="switch__box" aria-hidden="true" data-page-node-id="SdpTJRUuTcbSwCvXF2iACZ"></span>
-            <span class="switch__text" data-page-node-id="FUHe6fuqXtojD2andeuvT4">逐次反馈
-              <em data-page-node-id="60XclOyJpwLaSvEPCs1J3Y">每答完立刻告诉你对错。会引导你不断调整标准，正式实验建议关闭。</em>
-            </span>
-          </label>
-
-          <button type="button" class="btn btn--primary btn--lg" id="btnStart" data-page-node-id="t12i7XGU9ZLYHpAgkNeBtZ">开始检测任务 →</button>
-        </div>
-
-        <div class="card card--how" data-page-node-id="ilGMRxwBnBwGJX9DSWS9D1">
-          <h3 class="card__title" data-page-node-id="rVaFl3lU1DBUwUe1tJzWDh">怎么玩</h3>
-          <ol class="instructions" id="instructionList" data-page-node-id="nmhmD6OflPD4FRalyrFeoa"></ol>
-          <div class="keymap" data-page-node-id="FGJ3mCiJdb26df66F9cFVU">
-            <div class="keymap__item" data-page-node-id="6pe2eCkoHT6WJxYREVnUD9"><kbd data-page-node-id="oVSLklXcJqLoCvXy2IapTS">F</kbd><span data-page-node-id="GO8zElaJ2QVxrXzM0HOFWc">有目标</span></div>
-            <div class="keymap__item" data-page-node-id="2sSzzHEAkoQ8N6CQyy86SN"><kbd data-page-node-id="iVZE7jPQ5X0LDC63FQSzNU">J</kbd><span data-page-node-id="skb2Wx2rusFIXa3nLxcMHd">无目标</span></div>
-            <div class="keymap__item" data-page-node-id="3g2b582p30hC4YY3AZrNLx"><kbd data-page-node-id="pnfGA0oJN3PCaYlEe4P6Wz">Enter</kbd><span data-page-node-id="CpQijhM1SA5N7XHLoSzsSF">在简报页直接开始</span></div>
-          </div>
-          <p class="hint" data-page-node-id="RE0rpJbbsudJnggxwankcZ">
-            屏幕上每次只会出现一帧记录。别急着按 —— 先把整段时间轴扫一遍，
-            再决定那条可疑的亮线到底是真的连续，还是噪声碰巧连成了一条。
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== ② 检测任务 ==================== -->
-    <section class="view" id="view-task" data-page-node-id="nz0o1MCSIUMERn4l929Y2w">
-      <div class="hud" data-page-node-id="HJ3sPuIr0K5S0gdRvQ0CCi">
-        <div class="hud__item" data-page-node-id="dfhWLhFnfcjWOZeEwugeVJ"><span data-page-node-id="qWFGIdfy5HPmztKQUfQpTn">试次</span><b id="hudTrial" data-page-node-id="OKS8li7Yn9tYv9FvXjrBuB">— / —</b></div>
-        <div class="hud__item" data-page-node-id="UBk8C2CjrCy1ARYBc9uiNB"><span data-page-node-id="TsulBfpW7xOzaVaUnxIEsO">先验 P(S)</span><b id="hudPrior" data-page-node-id="cgMkEOn7akf9QXKdb3lJ1y">—</b></div>
-        <div class="hud__item" data-page-node-id="PxJQAF1eTOB6nguvkZYnvv"><span data-page-node-id="jvXCFCsCctzMIUMODWRpBz">难度 d′</span><b id="hudDp" data-page-node-id="r0aAKyn8tTsaruHRbFAU5F">—</b></div>
-        <div class="hud__item" data-page-node-id="1IPqEbtTaj9YOahHKv6SJq"><span data-page-node-id="gMaR4WOSX0cmTvu5vltz9A">观察时长</span><b id="hudObserve" data-page-node-id="CDIHV3J2JXGY4NYA5kx2Ks">—</b></div>
-        <div class="task-banner task-banner--muted" id="taskBanner" data-page-node-id="A6QuMH64HkFg7NSP3y5KzM">准备中…</div>
-      </div>
-
-      <div class="sonar" data-page-node-id="11ySGKfUhGrFl3yKl5Gu6B">
-        <canvas id="sonarCanvas" aria-label="声呐瀑布图" data-page-node-id="0rM2Nl0YlHpHtTEpEJ8ZxL"></canvas>
-        <div class="sonar__scan" data-page-node-id="hvk4ZrFJ2rlqSMOSGGxYDn"><div class="sonar__scan-fill" id="timerFill" data-page-node-id="FBruBeFHicpdU9JQwYM8rF"></div></div>
-      </div>
-
-      <div class="respond" data-page-node-id="juNxMKpymbzqXGApqA3dx6">
-        <button type="button" class="btn btn--yes" id="btnYes" disabled data-page-node-id="sPttHlYyCZn5xW4RCEPJWn">
-          <span class="btn__key" data-page-node-id="4AwtATGIv2lpJUpgAZhaov">F</span>
-          <span class="btn__label" data-page-node-id="AojZFpQzgy0BYxEijrJoMh">有目标</span>
-          <span class="btn__sub" data-page-node-id="77g2ls25o0URL2e8R4h9tW">Signal present</span>
-        </button>
-        <button type="button" class="btn btn--no" id="btnNo" disabled data-page-node-id="Ov05H5rwtBSJW9ln4Jtv9b">
-          <span class="btn__key" data-page-node-id="bTUf41swe4dTtXeBKvyqmR">J</span>
-          <span class="btn__label" data-page-node-id="R3YWiE3aLYFyL7CKqdjCBT">无目标</span>
-          <span class="btn__sub" data-page-node-id="wbWfKKBNSCdutwiOwAGB9o">Noise only</span>
-        </button>
-      </div>
-
-      <p class="task-tip" data-page-node-id="kGyIvpCZOeZbNWH7RuY0NC">
-        提示：扫描过程中不能作答。真正难的不是"看见"，而是<b data-page-node-id="UxYOFhosWcXABW7nIYY0mG">在同一条模糊的亮线上，决定报还是不报</b> ——
-        那才是 c。
-      </p>
-    </section>
-
-    <!-- ==================== ③ 结果分析 ==================== -->
-    <section class="view" id="view-result" data-page-node-id="iZuTpM8378p1gY9BHbJ5kR">
-      <div class="result-head" data-page-node-id="jyZg0SKSHNU1aAhQI360AR">
-        <div data-page-node-id="AxasMBifFt1fZF6v5QBo64">
-          <p class="hero__kicker" data-page-node-id="vbwMFDcj8T0Jn6C80SqoGf">本局结果</p>
-          <h2 class="result-head__title" data-page-node-id="fRABVerPCt7u58OtXOFVQa">你的检测成绩</h2>
-        </div>
-        <div class="result-meta" id="resultMeta" data-page-node-id="aCmR30beHTn4D7epf9YgJt"></div>
-      </div>
-
-      <div class="kpi-grid" id="kpiGrid" data-page-node-id="LdxViO0wLLZLQLSdHFNwGx"></div>
-
-      <div class="grid grid--2" data-page-node-id="w1z4DIb8JOyShqGoDRGGsp">
-        <div class="card" data-page-node-id="UQs8TKWUVWkWTBEZNutVWV">
-          <h3 class="card__title" data-page-node-id="7gWIJbV3IGRxxYxu70ez3Y">混淆矩阵</h3>
-          <div id="matrixGrid" data-page-node-id="ncFA9cRHpJhUKLj03ob0SF"></div>
-        </div>
-        <div class="card" data-page-node-id="f3sX8r0jJ7NHuDlhYmcQ8t">
-          <h3 class="card__title" data-page-node-id="dwIERjcEp0IQr3qqMUirvJ">结果解读</h3>
-          <div class="narrative" id="resultNarrative" data-page-node-id="6q5mKNHChscEhoZz17NWJH"></div>
-        </div>
-      </div>
-
-      <div class="grid grid--2" data-page-node-id="gD0AWaUSwX4tdj4n0AF7oJ">
-        <div class="card" data-page-node-id="0o8iF0OeEJdjWk0k7LwgZF">
-          <h3 class="card__title" data-page-node-id="RH8d89pMnPVx3aKVxZOQVH">为什么光看"准确率"不够？</h3>
-          <div class="chart-box" data-page-node-id="TnINxlb5orfJPn1d9BchWE"><canvas id="accCanvas" aria-label="准确率与偷懒基线对比" data-page-node-id="fzCfUnCzm6HeQNUuMYIPZ7"></canvas></div>
-          <p class="caption" data-page-node-id="fwfEgVunldCBvjh0VQZ1Yv">
-            准确率把"看先验猜"和"看得清"混在一个数字里。先验偏离 50% 越远，这个数字就越不可信。
-          </p>
-        </div>
-        <div class="card" data-page-node-id="svzRHRyONNmbKVq34qzGGh">
-          <h3 class="card__title" data-page-node-id="PrRNhPEZDJVVo2ZBk0WE4j">两个分布与你的判定标准</h3>
-          <div class="chart-box chart-box--tall" data-page-node-id="XcjF7p4EBJocuyGODjfEIi"><canvas id="distCanvas" aria-label="噪音与信号分布" data-page-node-id="JMznmIDocrxMfyVL7uGEfg"></canvas></div>
-          <p class="caption" id="distCaption" data-page-node-id="UDrxos2yAUYcmvC0y4Q7fD"></p>
-        </div>
-      </div>
-
-      <div class="grid grid--2" data-page-node-id="kTIV4t4rO71KFtkqux0sTU">
-        <div class="card" data-page-node-id="Vott2jRhpxBskBI9CVWyLV">
-          <h3 class="card__title" data-page-node-id="ZLJ76DJFCoM5SzniwLQXfi">ROC 曲线</h3>
-          <div class="chart-box chart-box--tall" data-page-node-id="td9HaHr2t3myYMSV3URDo6"><canvas id="rocCanvas" aria-label="ROC 曲线" data-page-node-id="JQk0Mr4VJFLniJfZZSe40m"></canvas></div>
-          <p class="caption" id="rocCaption" data-page-node-id="3AxhtTJK5DrSn5io0rOrmB"></p>
-        </div>
-        <div class="card" data-page-node-id="3AyqwVOlo6WGAtMHQFWOeU">
-          <h3 class="card__title" data-page-node-id="R8GWuxRPEQeNQMGp7upeBr">多局对比</h3>
-          <div class="table-wrap table-wrap--short" data-page-node-id="4sKN9XXmgDPsERbWIfuKEc">
-            <table class="tbl" data-page-node-id="lN4XiAsvZo8QDadYIM74l9">
-              <thead data-page-node-id="fAHOuX3edex78BKhlOPdEb">
-                <tr data-page-node-id="dYXwQd4nhNHS7KcrOIfeVH">
-                  <th data-page-node-id="Zda8Ox3GH3bAcxZXbsuFZT">局</th><th data-page-node-id="BpggEfFTFB7anvIp5z9QRk">先验</th><th data-page-node-id="ZDpfNLW2HaMZ3Kwv1cpcq6">设计 d′</th><th data-page-node-id="VKkkR7ZcI2ZMOihFyvNWwW">试次</th>
-                  <th data-page-node-id="1OuzrGAL8Q8j876IgFfNap">实测 d′</th><th data-page-node-id="8do3Av4mkNRfH9nboJHwRC">c</th><th data-page-node-id="DlEDIB4bz7dKcNpRSLp3Ga">β</th><th data-page-node-id="vnwLjYs8VBY1A8HYyLDMmi">准确率</th>
-                </tr>
-              </thead>
-              <tbody id="historyTableBody" data-page-node-id="L5L6tDbL8W2l2qEmJTNc08"></tbody>
-            </table>
-          </div>
-          <div class="result-actions" data-page-node-id="jknSVRFLFZEgovardpjC0i">
-            <button type="button" class="btn btn--ghost" id="btnExport" data-page-node-id="zWI3qenzqiZyyfKj8lToql">导出逐试次 CSV</button>
-            <button type="button" class="btn btn--ghost" id="btnClearHistory" data-page-node-id="RJw0i8Jc5DfgVV17zDkBOa">清空历史</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" data-page-node-id="4qbs6kfWAJybQYG7GMm8aW">
-        <h3 class="card__title" data-page-node-id="MecHCAxqcS6A0urAqEAfqb">逐试次明细</h3>
-        <div class="table-wrap" data-page-node-id="tfRltLydhmwMSgDvQsdF8S">
-          <table class="tbl tbl--striped" data-page-node-id="5t6zEGmd0Wl4RAqk4bS5Es">
-            <thead data-page-node-id="A7TsdoAUD9qOGAAuSbcyyX">
-              <tr data-page-node-id="UPR5jOPmIaljmcFuFkcm5G">
-                <th data-page-node-id="2PtGh4COdP4CjxnDYzhBKC">试次</th><th data-page-node-id="VtPt84B5rC3l29t6ot6R8U">真实状态</th><th data-page-node-id="0Dxkv2aGDCfUbgDdulv0Us">你的回答</th><th data-page-node-id="gUt8KDanoe7tzV70nth8WD">结果</th>
-                <th data-page-node-id="sIrnpoV03H0gUVpUxcxtTM">反应时 (s)</th><th data-page-node-id="u59hfM1qqouVerP8zbrigY">目标频率 (kHz)</th><th data-page-node-id="KQREEcMsOYEx0A7eIBC5ia">宽频爆发</th>
-              </tr>
-            </thead>
-            <tbody id="trialTableBody" data-page-node-id="cne9SNEAuDMDRBHEZMgmTh"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="result-actions result-actions--center" data-page-node-id="BFW0vmBzRTYJrsvKvtbvZL">
-        <button type="button" class="btn btn--primary" id="btnRedo" data-page-node-id="w3nIOGlM90XqZX9CWJKbNN">用同样参数再来一局</button>
-        <button type="button" class="btn btn--ghost" id="btnRetune" data-page-node-id="0UJY4pPAN9U2zyHeGZoFPC">换一组参数</button>
-      </div>
-    </section>
-
-    <!-- ==================== ③ 概念实验室 ==================== -->
-    <section class="view" id="view-concept" data-page-node-id="2iiqWrbLEhM5Q9WF70e6di">
-      <div class="hero hero--slim" data-page-node-id="gtPgWQ0xDkDyAlYcFT0xgv">
-        <p class="hero__kicker" data-page-node-id="UYPDoP4udzgS9WSHoK6fur">概念实验室</p>
-        <h2 class="hero__title" data-page-node-id="cgMLWVKSZMyj6XtTUW9LN5">把 d′ 和 c 拖起来看</h2>
-        <p class="hero__lead" data-page-node-id="N4jvy7oOJqrDQqVeuHIhKI">
-          这里的每一条曲线都是公式算出来的，不是画上去的。拖动滑块，观察
-          <b data-page-node-id="RCEMXF82OsSIdDDdqzWIHn">辨别力</b>（两个分布的距离）和<b data-page-node-id="pRfgnx0xl7MzChWGYb8Ljl">判定标准</b>（那根竖线）分别改变了什么。
-        </p>
-      </div>
-
-      <div class="grid grid--concept" data-page-node-id="8S5qZpWvW8SqWeGq4AQWJI">
-        <div class="card card--controls" data-page-node-id="4yyAHAuxchvds60YaFcBwj">
-          <h3 class="card__title" data-page-node-id="5Hw79PZ1cmux68KK4IJKW9">参数</h3>
-
-          <div class="field" data-page-node-id="jscvcKvIQt2CEsA7lSmE88">
-            <label for="cDp" data-page-node-id="IAbEeB3HKCLPtlZtSUVG1t">辨别力 d′</label>
-            <div class="field__row" data-page-node-id="JU9SJdKLPnBXfAYivXakWV">
-              <input type="range" id="cDp" min="0" max="4" step="0.1" value="1.5" data-page-node-id="N1wdqshAtPpfyTiRU53Lma">
-              <output id="cDpVal" data-page-node-id="kIloA8VQZPE2Y8KHh2mzDX">1.5</output>
-            </div>
-            <p class="field__hint" data-page-node-id="ES0elFBweii8rznIiH05mF">两个分布均值之间的距离。调大它，两条曲线分开。</p>
-          </div>
-
-          <div class="field" data-page-node-id="mIelh9u5HFWRPyJxIuwgEm">
-            <label for="cC" data-page-node-id="NG1NUx9zCVS4Ou9vu4EpEY">判定标准 c</label>
-            <div class="field__row" data-page-node-id="RqOcoUiFSmISfWn9VYpkfF">
-              <input type="range" id="cC" min="-2" max="2" step="0.05" value="0" data-page-node-id="yZxxf5Wmf5OzwV4zR9mt4j">
-              <output id="cCVal" data-page-node-id="kubBuXVpx5suLJlbEDGmq0">0.00</output>
-            </div>
-            <p class="field__hint" data-page-node-id="gSu1iJqSqTmnoGirETKKeQ">c &gt; 0 保守（少报"有"），c &lt; 0 宽松（多报"有"）。</p>
-          </div>
-
-          <div class="field" data-page-node-id="cmdkDcyAlJil0htdA56SzZ">
-            <label for="cPrior" data-page-node-id="cR0jvPryUn1HXtZTxDic3q">先验概率 P(S)</label>
-            <div class="field__row" data-page-node-id="nnZ0jyzxfTPa2LBoJzE2NA">
-              <input type="range" id="cPrior" min="0.1" max="0.9" step="0.05" value="0.5" data-page-node-id="4mxdn5vuwtpp45FGLTblTK">
-              <output id="cPriorVal" data-page-node-id="Ie3ft21NBX0wiZmm9qIHzf">50%</output>
-            </div>
-            <p class="field__hint" data-page-node-id="M1hpF1Yu8khqGxPoHBPljd">影响最优判定标准 c*，不影响 d′。</p>
-          </div>
-
-          <h3 class="card__title card__title--sub" data-page-node-id="6ZEjGPBF4pJLF3EBZy4afT">支付矩阵（相对价值）</h3>
-          <div class="payoff" data-page-node-id="80jFxJFEN5fyKQforCQrat">
-            <label data-page-node-id="HhQ1xMkSPPnjzIXAgBdHsJ">击中 V<sub data-page-node-id="JkcX1sXHCO1T5uhEH1WKKK">H</sub><input type="number" id="payVH" value="10" step="1" data-page-node-id="xIccHHSil8braqDJuDpfgr"></label>
-            <label data-page-node-id="LBERX1MtCeBSTqUxj7uEBF">正确排除 V<sub data-page-node-id="BkSe4NPIXTfTkAzrHXFwjm">CR</sub><input type="number" id="payVCR" value="2" step="1" data-page-node-id="4G7NUsEHelCRXefMLRapnJ"></label>
-            <label data-page-node-id="wgQobEtW6mzZr1Y2EkRUya">误报 V<sub data-page-node-id="3d3hiPBF6mIM1zlL857BUl">FA</sub><input type="number" id="payVFA" value="-4" step="1" data-page-node-id="ccoVLqBy6oEmFMquq4kcxH"></label>
-            <label data-page-node-id="OfEYoS7QEvILIinqpIsxZY">漏报 V<sub data-page-node-id="A1sosNZwWCg4VxNgqoC8Gy">M</sub><input type="number" id="payVM" value="-20" step="1" data-page-node-id="ZFFCWwJS8IX8HXwLkNvHFR"></label>
-          </div>
-
-          <label class="switch switch--tight" data-page-node-id="VIxC9U59inDGHFFUTWwkrN">
-            <input type="checkbox" id="chkOptimal" checked data-page-node-id="PvaXG87xJ811VM77TQ0BCn">
-            <span class="switch__box" aria-hidden="true" data-page-node-id="qrHNqwOnnEamXaDRBHHu0L"></span>
-            <span class="switch__text" data-page-node-id="tuwBBqp2xx0plrqMxL0IsV">显示最优判定标准 c*</span>
-          </label>
-          <label class="switch switch--tight" data-page-node-id="LhSb1D9IBv1Sq9SpaHQGOA">
-            <input type="checkbox" id="chkZRoc" data-page-node-id="fnbWumLRtyPVT3BTH8mOlN">
-            <span class="switch__box" aria-hidden="true" data-page-node-id="sLqojWWxcq7BJ32dooABtn"></span>
-            <span class="switch__text" data-page-node-id="MQUue9kyZUCiYpBmbf3B0K">ROC 切换到 z 坐标</span>
-          </label>
-
-          <button type="button" class="btn btn--ghost btn--block" id="btnConceptReset" data-page-node-id="a1fMHhIwL60GUl74EEfl1Z">恢复默认</button>
-        </div>
-
-        <div class="stack" data-page-node-id="WiSQAWRU4vdKjbN15iRxms">
-          <div class="card" data-page-node-id="1mUG9xsUk4TtpnAnyUYyvE">
-            <h3 class="card__title" data-page-node-id="vPacOjvgw98WuC3ALiBs7O">两个分布与判定标准</h3>
-            <div class="chart-box chart-box--tall" data-page-node-id="1qv1mlUN6PFOAFSPF4GjPA"><canvas id="conceptDistCanvas" aria-label="双分布交互图" data-page-node-id="uX0zBEqJPE0hd2pCz0gHjz"></canvas></div>
-            <p class="caption" data-page-node-id="bCBz9dpYRuJQ3Bbh2qzV23">
-              橙色曲线是噪音分布 N(0,1)，青色曲线是信号分布 N(d′,1)。竖线是判定标准：
-              落在它右边的"噪音"会被误报（橙色阴影），落在它右边的"信号"会被击中（青色阴影）。
-              紫色虚线是给定先验与支付矩阵下的最优标准 c*。
-            </p>
-          </div>
-
-          <div class="grid grid--2" data-page-node-id="WgKugHHl17kcaa8DLxrSz5">
-            <div class="card" data-page-node-id="3wtXMqDVxQkYXpxBcxAB8t">
-              <h3 class="card__title" data-page-node-id="61d12AUqJIuzBfSECGskiE">ROC / z-ROC</h3>
-              <div class="chart-box chart-box--tall" data-page-node-id="DzamJadrV30bGV7NRL2kV8"><canvas id="conceptRocCanvas" aria-label="ROC 曲线" data-page-node-id="AgmgzfzepfkwBzCNeNaiKS"></canvas></div>
-              <p class="caption" data-page-node-id="oFsm2xfUhAMCivgg79Cgwe">
-                固定 d′、把所有 c 走一遍，得到的轨迹就是 ROC。等方差模型下，
-                换到 z 坐标后它是一条<b data-page-node-id="96HxdA3Z45o1kX7BgkH6pR">斜率 1 的直线</b>，纵轴截距恰好等于 d′。
-              </p>
-            </div>
-            <div class="card" data-page-node-id="DGHJBWUMmKF7K35Fiuf8K4">
-              <h3 class="card__title" data-page-node-id="JWBN51kWMbEprSQNDwHRLa">指标读数</h3>
-              <dl class="readout" id="conceptReadout" data-page-node-id="wckGD60yikReFYQDhr5XMY"></dl>
-            </div>
-          </div>
-
-          <div class="card" data-page-node-id="s6zVC5YN4RxDGZRXr2DoQT">
-            <h3 class="card__title" data-page-node-id="V9ZYkXydTOrPR5IzG8DbHC">准确率悖论</h3>
-            <div class="chart-box" data-page-node-id="fbofvXshd3ywAdRX5NdrgB"><canvas id="paradoxCanvas" aria-label="准确率对照条形图" data-page-node-id="UAhEO2yZmhRwRyP9hAiVKd"></canvas></div>
-            <p class="caption" id="paradoxText" data-page-node-id="4cRkguhBvaqdXtai8tBTYT"></p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <footer class="footer" data-page-node-id="BIyRvylD4Pl2U1fZahi7uv">
-    <p data-page-node-id="UCCYA7BBSxpwHGfCOOgA5k">
-      信号检测论交互式实验网站 · 场景与实现均为原创，纯 HTML / CSS / JavaScript，无任何第三方依赖，
-      双击 <code data-page-node-id="4B8uAR3KhHvEATaf46Zx97">index.html</code> 即可在浏览器中运行。
-    </p>
-    <p class="footer__dim" data-page-node-id="TmCxdFIdEDM5zLuf7c6MdE">
-      理论依据：Green &amp; Swets (1966)；Macmillan &amp; Creelman, <i data-page-node-id="kGdhspNGBCslrWIPGpoeeF">Detection Theory</i> (2005)；
-      对数线性校正见 Hautus (1995)；非参数 A′ 见 Grier (1971)。
+  <footer class="wrap foot">
+    <p>工程心理学 · 作业二 · 匿名数据，仅用于课程分析</p>
+    <p class="foot-dim">
+      研究者备份入口：<a href="#/researcher">本机缓存导出</a>
     </p>
   </footer>
-</div>
 
-<!-- 各模块按依赖顺序加载（普通 script，保证 file:// 直接打开也能运行） -->
-<script src="js/utils.js"></script>
-<script src="js/config.js"></script>
-<script src="js/sdt.js"></script>
-<script src="js/sonar.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/results.js"></script>
-<script src="js/concept.js"></script>
-<script src="js/app.js"></script>
+  <noscript>
+    <p style="padding:24px;text-align:center">本实验需要 JavaScript，请启用后重新打开。</p>
+  </noscript>
+
+  <!-- 依赖顺序：配置 → 引擎 → 统计 → 数据 → 各实验 → 结果页 → 路由 -->
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/exp1-cb.js"></script>
+  <script src="js/exp2-lp.js"></script>
+  <script src="js/exp3-cm.js"></script>
+  <script src="js/results.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
