@@ -107,52 +107,63 @@
     var g = canvas.getContext('2d');
     ctx.hint('变化发生在<b>蓝色</b>方块上吗？按 <kbd>F</kbd> = 是，<kbd>J</kbd> = 否');
 
+    function blankNow() {
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, GEO.W, GEO.H);
+    }
+
+    /* 关键：先呈现一个「变化前」的完整周期，这段时间不接受任何反应。
+       否则被试会在还没看到任何变化时就按键（实测 RT 只有 200 ms，
+       准确率 = 随机水平），RT 就失去意义。
+       反应的计时起点 = 变化帧第一次出现的那一刻。 */
     drawFrame(g, trial, false);
-    var t0 = performance.now();
 
-    var keyP = ctx.waitResponse(['f', 'j'], ['是 · 在蓝色方块上', '否 · 不在蓝色方块'], TIMEOUT_MS, t0);
+    return A.sleep(SHOW_MS).then(function () {
+      blankNow();
+      return A.sleep(BLANK_MS);
+    }).then(function () {
+      /* ---- 计时起点：变化帧首次呈现 ---- */
+      drawFrame(g, trial, true);
+      var t0 = performance.now();
+      var keyP = ctx.waitResponse(['f', 'j'], ['是 · 在蓝色方块上', '否 · 不在蓝色方块'],
+                                  TIMEOUT_MS, t0);
 
-    var stop = false;
-    (function flicker() {
-      if (stop) return;
-      drawFrame(g, trial, false);
-      A.sleep(SHOW_MS).then(function () {
+      var stop = false;
+
+      /* ---- 闪烁循环：变化帧 → 空白 → 原帧 → 空白 → … ---- */
+      var showShifted = false;               // 变化帧已经画过一次，下一个是原帧
+      (function flicker() {
         if (stop) return;
-        g.fillStyle = '#ffffff';
-        g.fillRect(0, 0, GEO.W, GEO.H);
-        return A.sleep(BLANK_MS);
-      }).then(function () {
-        if (stop) return;
-        drawFrame(g, trial, true);
-        return A.sleep(SHOW_MS);
-      }).then(function () {
-        if (stop) return;
-        g.fillStyle = '#ffffff';
-        g.fillRect(0, 0, GEO.W, GEO.H);
-        return A.sleep(BLANK_MS);
-      }).then(flicker);
-    })();
+        drawFrame(g, trial, showShifted);
+        showShifted = !showShifted;
+        A.sleep(SHOW_MS).then(function () {
+          if (stop) return;
+          blankNow();
+          return A.sleep(BLANK_MS);
+        }).then(flicker);
+      })();
 
-    return keyP.then(function (r) {
-      stop = true;
-      var correct = !r.timeout && ((r.key === 'f') === (trial.cond === 'inset'));
-      var rec = {
-        cond: trial.cond,
-        rt: r.timeout ? null : Math.round(r.rt),
-        correct: correct,
-        resp: r.timeout ? 'timeout' : (r.key === 'f' ? 'yes' : 'no'),
-        timeout: r.timeout ? 1 : 0
-      };
+      return keyP.then(function (r) {
+        stop = true;
+        var correct = !r.timeout && ((r.key === 'f') === (trial.cond === 'inset'));
+        var rec = {
+          cond: trial.cond,
+          rt: r.timeout ? null : Math.round(r.rt),
+          correct: correct,
+          resp: r.timeout ? 'timeout' : (r.key === 'f' ? 'yes' : 'no'),
+          timeout: r.timeout ? 1 : 0
+        };
 
-      var done = Promise.resolve();
-      if (isPractice) {
-        var msg = trial.cond === 'inset'
-          ? '正确：变化在蓝色方块上'
-          : '正确：变化不在蓝色方块上';
-        done = ctx.feedback(correct ? '✔ ' + msg : '✘ ' + msg, correct, 1000);
-      }
-      return done.then(function () {
-        return A.sleep(220).then(function () { return rec; });
+        var done = Promise.resolve();
+        if (isPractice) {
+          var msg = trial.cond === 'inset'
+            ? '变化在蓝色方块上'
+            : '变化不在蓝色方块上';
+          done = ctx.feedback((correct ? '✔ 正确 · ' : '✘ 错误 · ') + msg, correct, 1000);
+        }
+        return done.then(function () {
+          return A.sleep(220).then(function () { return rec; });
+        });
       });
     });
   }

@@ -378,3 +378,22 @@ table.tbl tr:last-child td { border-bottom: none; }
   .resp .btn { width: 100%; }
   .meta-row { flex-wrap: wrap; gap: 8px; }
 }
+
+/* 结果页的数据质量警示（如计时缺陷导致数据不可用） */
+.warn-box {
+  margin: 16px 0 18px;
+  padding: 13px 16px 14px;
+  border-left: 3px solid var(--bad);
+  background: #fbeded;
+  border-radius: 6px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #6f2a2a;
+}
+.warn-box b { color: var(--bad); }
+.warn-box > b:first-child {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  letter-spacing: .2px;
+}

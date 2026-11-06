@@ -150,6 +150,26 @@
     var html = '<h2>实验一 · 闪烁变化盲（W5）</h2>' +
       '<p class="dim">Rensink, O\'Regan &amp; Clark (1997) · 改进条件：变化位置 = 目标色（蓝）/ 非目标色</p>';
 
+    // 数据质量自检：刺激为「变化前帧 400 ms + 空白 130 ms」，首次变化最早出现在 530 ms。
+    // 若所有被试正确试次的平均 RT 都短于该阈值，说明计时起点落在变化之前，
+    // 记录到的 RT 反映的是按键速度，而非检测到变化所需的时间。
+    var FIRST_CHANGE_MS = 530;
+    var rtList = valid.map(function (r) { return r.inset_rt; }).filter(isFinite);
+    var timingFlaw = rtList.length > 0 && rtList.every(function (v) { return v < FIRST_CHANGE_MS; });
+
+    if (timingFlaw) {
+      var lo = Math.min.apply(null, rtList).toFixed(0);
+      var hi = Math.max.apply(null, rtList).toFixed(0);
+      html += '<div class="warn-box">' +
+        '<b>数据质量警示 · 本实验数据不用于假设检验</b>' +
+        '本批 ' + rtList.length + ' 名被试正确试次的平均反应时为 ' + lo + '–' + hi + ' ms，' +
+        '<b>全部短于首次变化出现的时间</b>（约 ' + FIRST_CHANGE_MS + ' ms = 变化前帧 400 ms + 空白 130 ms）。' +
+        '这意味着被试在变化尚未发生时即作出反应，记录到的 RT 反映按键速度，而不是「看到变化有多快」。' +
+        '成因是计时起点被设在了变化前帧，属实现缺陷；该缺陷已定位并修复（改为变化帧首次出现才计时，本仓库当前版本已应用），' +
+        '但本批数据无法追溯修正。因此下表数字仅作记录，不据此对 H1a / H1b 下任何结论——详见 README 第 6.2 节。' +
+        '</div>';
+    }
+
     html += '<div class="kpis">' +
       '<div class="kpi"><div class="v">' + valid.length + '</div><div class="l">有效被试（n）</div></div>' +
       '<div class="kpi"><div class="v">' + (tRT ? A.fmt(tRT.dz) : '—') + '</div><div class="l">RT 效应量 dz</div></div>' +
@@ -185,13 +205,19 @@
     if (tRT) {
       var supported = tRT.meanDiff > 0;
       var sigRT = tRT.p < 0.05;
-      html += '<p>' + verdictChip(supported, supported ? '预测方向成立' : '预测方向不成立') +
-        (sigRT ? '' : verdictChip(false, '统计上未达显著')) +
-        '　目标色变化的检测 ' + (supported ? '更快' : '没有更快') +
-        '（非目标色 − 目标色 = ' + tRT.meanDiff.toFixed(0) + ' ms，95% CI [' +
-        tRT.ci[0].toFixed(0) + ', ' + tRT.ci[1].toFixed(0) + ']，p ' + S.fmtP(tRT.p) + '）。</p>';
-      if (valid.length < 8) {
-        html += '<p class="dim small">n = ' + valid.length + '，统计检验力有限，结论以效应量方向为主。</p>';
+      if (timingFlaw) {
+        html += '<p>' + verdictChip(null, '数据不可用') +
+          '　本批数据的反应时整体短于变化首次出现的时间，无法解释为「检测到变化所需的时间」，' +
+          '因此这里不对 H1a / H1b 作支持或不支持的判定。下表数字仅作记录，原因与修复见上方警示框及 README 第 6.2 节。</p>';
+      } else {
+        html += '<p>' + verdictChip(supported, supported ? '预测方向成立' : '预测方向不成立') +
+          (sigRT ? '' : verdictChip(false, '统计上未达显著')) +
+          '　目标色变化的检测 ' + (supported ? '更快' : '没有更快') +
+          '（非目标色 − 目标色 = ' + tRT.meanDiff.toFixed(0) + ' ms，95% CI [' +
+          tRT.ci[0].toFixed(0) + ', ' + tRT.ci[1].toFixed(0) + ']，p ' + S.fmtP(tRT.p) + '）。</p>';
+        if (valid.length < 8) {
+          html += '<p class="dim small">n = ' + valid.length + '，统计检验力有限，结论以效应量方向为主。</p>';
+        }
       }
     } else {
       html += '<p class="dim">有效被试不足 2 人，暂无法做推断统计。</p>';
@@ -201,7 +227,8 @@
       '<p class="small">Rensink 等（1997）证明：在没有注意参与时，即使画面中的变化很大也很难被发现（变化盲）。' +
       '本研究把这个结论往"注意集"方向推了一步——参照 Most 等（2001）的注意定势研究，' +
       '与当前注意目标一致的物体，其变化应当更容易被捕捉。' +
-      '如果上表的差值为正，说明注意集确实起到了"门控"作用，而不只是"有没有注意"这么粗的区分。</p>';
+      '如果上表的差值为正，说明注意集确实起到了"门控"作用，而不只是"有没有注意"这么粗的区分。' +
+      (timingFlaw ? '<b>但本实验因计时缺陷导致反应时不可解释，上述推论未获检验。</b>' : '') + '</p>';
 
     html += '<h3>被试明细（匿名编号）</h3>' +
       table(['编号', '目标色 RT', '非目标色 RT', '目标色正确率', '非目标色正确率', '试次数'],
@@ -216,7 +243,8 @@
           ];
         }));
 
-    return { html: html, supported: tRT ? tRT.meanDiff > 0 : null, p: tRT ? tRT.p : null };
+    return { html: html, supported: tRT ? tRT.meanDiff > 0 : null, p: tRT ? tRT.p : null,
+             timingFlaw: timingFlaw };
   }
 
   /* ============================================================
@@ -532,6 +560,10 @@
     /* ---- 预测核对总表 ---- */
     function sumRow(label, pred, r) {
       if (!r) return [label, pred, '无数据', '<span class="chip">—</span>'];
+      // 数据本身不可用（例如计时缺陷）时，不把结果解读为"支持/相反"
+      if (r.timingFlaw) {
+        return [label, pred, '数据不可用', '<span class="chip mid">数据无效</span>'];
+      }
       var sig = typeof r.p === 'number' && isFinite(r.p) && r.p < 0.05;
       var cls = r.supported ? (sig ? 'ok' : 'mid') : (sig ? 'bad' : 'mid');
       var txt = r.supported ? (sig ? '支持' : '方向一致·未显著')

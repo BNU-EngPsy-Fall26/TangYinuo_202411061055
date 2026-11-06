@@ -13,7 +13,7 @@
  *       high   目标出现率 50%（基线，无反馈）
  *       low    目标出现率 10%（无反馈）
  *       lowfb  目标出现率 10% + 每试次即时反馈
- * 每条件 30 试次。
+ * 高流行率 30 试次、低流行率各 50 试次（保证每块 5 个目标试次）。
  *
  * 因变量：漏报率、虚报率、d'、判断标准 c
  * 预测：low 的漏报率 > high（复现低流行率效应）；
@@ -26,7 +26,7 @@
   var A = window.ALAB;
 
   var GEO = { W: 480, H: 480, N: 5, SP: 92, OFF: 46, SIZE: 30 };
-  var RT_LIMIT = 4000;
+  var RT_LIMIT = 5000;
   var ANGLES = [0, 90, 180, 270];
 
   /* ---------------- 刺激绘制 ----------------
@@ -147,7 +147,7 @@
     title: '低流行率视觉搜索',
     ref: 'Wolfe, Horowitz & Kenner (2005). Rare items often missed in visual searches. Nature.',
     minutes: '约 7 分钟',
-    trialsText: '练习 12 + 正式 90（每条件 30）',
+    trialsText: '练习 12 + 正式 130（高 30 / 低 50 / 低+反馈 50）',
 
     design: '单因素被试内三水平：high(50%) / low(10%) / lowfb(10%+反馈)',
     improvement: '在低流行率条件下加入"虚拟目标式即时反馈"，检验漏报是由"看不见"还是"标准漂移"造成。',
@@ -158,7 +158,7 @@
       '<p>你的任务：判断这一屏里有没有字母 <b>T</b>。</p>' +
       '<ul>' +
       '<li>有 T：按 <kbd>F</kbd>；没有 T：按 <kbd>J</kbd>（手机上点按钮）。</li>' +
-      '<li>每个试次最多 4 秒，请又快又准。</li>' +
+      '<li>每个试次最多 5 秒，请又快又准。</li>' +
       '<li>T <b>不是</b>每个试次都有——有的组块里很常见，有的组块里很罕见，' +
       '请按你真实的判断作答，不要因为"大概不会出现"就一律说没有。</li>' +
       '</ul>' +
@@ -167,7 +167,8 @@
       '<p>看<b>横杠和竖杆相接的位置</b>：T 的横杠压在竖杆<b>中间</b>（像飞机机翼），' +
       'L 的横杠与竖杆在<b>端点</b>相接（像直角）。字母怎么转，这个结构关系都不变。</p>' +
 
-      '<p class="dim">共 3 个组块、每组 30 试次，组块之间可以休息。练习有对错反馈，正式试次中只有第三个组块有反馈。</p>' +
+      '<p class="dim">共 3 个组块（高流行率 30 试次、低流行率 50 试次、低流行率+反馈 50 试次），组块之间可以休息。' +
+      '练习有对错反馈；正式试次中只有「低流行率+反馈」这一组每试次告诉你对错。</p>' +
 
       '<h3>这个实验的改进点</h3>' +
       '<p>Wolfe 等（2005）发现：目标越罕见，人在它真的出现时越容易漏掉——而且这主要不是"看不见"，' +
@@ -198,14 +199,14 @@
       /* --- 正式：三个组块，顺序随机（平衡顺序效应） --- */
       var blocks = [
         { cond: 'high', n: 30, rate: 0.5, fb: false },
-        { cond: 'low', n: 30, rate: 0.1, fb: false },
-        { cond: 'lowfb', n: 30, rate: 0.1, fb: true }
+        { cond: 'low', n: 50, rate: 0.1, fb: false },
+        { cond: 'lowfb', n: 50, rate: 0.1, fb: true }
       ];
       blocks = A.shuffle(blocks);
 
       await ctx.pause(
         '<div class="big-msg">练习结束</div>' +
-        '<p class="dim">接下来 3 个组块，共 90 个试次，约 5 分钟。' +
+        '<p class="dim">接下来 3 个组块，共 130 个试次，约 6 分钟。' +
         '不同组块里目标出现的频率不同，请始终按真实判断作答。<br>中途不要切换窗口。</p>',
         '进入正式实验');
 
@@ -215,7 +216,7 @@
         if (b > 0) {
           await ctx.pause(
             '<div class="big-msg">第 ' + (b + 1) + ' / 3 组</div>' +
-            '<p class="dim">' + COND_LABEL[blk.cond] + '，共 30 试次。<br>' +
+            '<p class="dim">' + COND_LABEL[blk.cond] + '，共 ' + blk.n + ' 试次。<br>' +
             '准备好了就继续。</p>', '继续');
         }
         var trials = buildBlock(blk.cond, blk.n, blk.rate, blk.fb);

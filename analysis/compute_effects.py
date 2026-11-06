@@ -99,7 +99,8 @@ def _norm_submission(obj, default_exp=None):
         "participant": str(pid).strip(),
         "experiment": str(exp).strip(),
         "condition": str(obj.get("condition") or "within"),
-        "submittedAt": obj.get("submittedAt") or obj.get("submitted_at") or "",
+        "submittedAt": (obj.get("submittedAt") or obj.get("submitted_at")
+                        or obj.get("created_at") or obj.get("createdAt") or ""),
         "trials": clean,
     }
 
@@ -425,6 +426,8 @@ def main():
     ap.add_argument("--out", dest="out", default=os.path.join("js", "data.js"),
                     help="输出路径，默认 js/data.js")
     ap.add_argument("--summary", action="store_true", help="在终端打印描述统计")
+    ap.add_argument("--since", default="",
+                    help="只保留该时间之后的提交，如 \"2026-11-06 17:00\"（重收数据后过滤旧数据用）")
     ap.add_argument("--exclude", default="",
                     help="剔除测试数据：编号或「编号:实验」，逗号分隔，如 P-4K7Q2M,P-9XZ1AB:cb")
     ap.add_argument("--min-trials", type=int, default=0,
@@ -435,6 +438,12 @@ def main():
     if not subs:
         print("没有解析到任何有效提交。请检查导出格式（参见脚本头部说明）。", file=sys.stderr)
         return 1
+
+    # 只保留某个时间点之后的提交（修复程序后重收数据时，用它在导出层面丢弃旧数据）
+    if args.since:
+        before = len(subs)
+        subs = [s for s in subs if str(s.get("submittedAt") or "") >= args.since]
+        print(f"  --since {args.since}：保留 {len(subs)}/{before} 条提交")
 
     # 剔除自测/中途退出的数据
     if args.exclude:
