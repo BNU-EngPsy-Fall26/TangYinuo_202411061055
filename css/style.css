@@ -176,6 +176,24 @@ h3 { font-size: 16px; margin: 22px 0 8px; }
 .panel p, .panel li { color: var(--ink-2); }
 .panel ul { padding-left: 20px; }
 
+/* 主试栏：同一台电脑连续测多人时用 */
+.host-bar {
+  margin-top: 18px;
+  background: #fbfcfe;
+  border-style: dashed;
+}
+.host-bar h3 { font-size: 15px; color: var(--muted); letter-spacing: .3px; }
+.host-bar .pid-chip {
+  font-family: var(--mono, ui-monospace, Consolas, monospace);
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
 .consent-box {
   background: #f7fafd;
   border: 1px solid var(--line);

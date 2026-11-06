@@ -65,6 +65,47 @@
               '<li>同一浏览器会记住你的匿名编号；换设备会生成新编号，属正常现象。</li>'
       })
     ]));
+
+    view.appendChild(hostBar(expList));
+  }
+
+  /**
+   * 主试栏：只在同一台电脑连续测多人时需要。
+   * 显示当前编号 + 这位被试已经做完哪几个实验，并提供「换下一位被试」。
+   */
+  function hostBar(expList) {
+    var pid = A.participantId();
+    var mine = A.localSubmissions().filter(function (s) { return s.participant === pid; });
+    var done = {};
+    mine.forEach(function (s) { done[s.experiment] = true; });
+
+    var progress = expList.map(function (exp) {
+      return exp.title.replace(/（.*?）/g, '') + (done[exp.id] ? ' ✓' : ' —');
+    }).join('　');
+
+    var btn = el('button', {
+      class: 'btn',
+      text: '换下一位被试（重置编号）',
+      onclick: function () {
+        if (!global.confirm('换人前请确认：当前这位被试的实验都已完成。\n\n重置后编号会变更，刚才那位的记录仍保留在本机与后台。继续？')) return;
+        var np = A.newParticipant();
+        global.alert('已生成新的匿名编号：' + np + '\n可以开始下一位被试了（会重新显示知情同意）。');
+        route();
+      }
+    });
+
+    return el('div', { class: 'panel host-bar' }, [
+      el('h3', { text: '主试栏（被试无需操作）' }),
+      el('p', {
+        class: 'small',
+        html: '当前编号：<b class="pid-chip">' + pid + '</b>　本机已完成：' + progress
+      }),
+      el('div', { class: 'btn-row' }, [btn]),
+      el('p', {
+        class: 'small dim',
+        text: '同一位被试连做多个实验时不要点它；换人时点一次，编号会变，后台才算作新被试。'
+      })
+    ]);
   }
 
   /* ============================================================

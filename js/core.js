@@ -127,6 +127,18 @@
     return pid;
   }
 
+  /**
+   * 主试专用：换下一位被试。
+   * 清掉本机记住的编号与同意状态，下一次进入实验会生成全新编号。
+   * 用于「同一台电脑连续测多人」的场景。
+   */
+  function newParticipant() {
+    store.del(K_PID);
+    store.del(K_CONSENT);
+    store.del(K_CONSENT + '.at');
+    return participantId();
+  }
+
   function hasConsent() { return !!store.get(K_CONSENT, false); }
   function giveConsent() {
     store.set(K_CONSENT, true);
@@ -535,6 +547,7 @@
     fmt: fmt,
     store: store,
     participantId: participantId,
+    newParticipant: newParticipant,
     hasConsent: hasConsent,
     giveConsent: giveConsent,
     localSubmissions: localSubmissions,
